@@ -1,5 +1,5 @@
 import { gql } from "apollo-server-express"
-import bcrypt, { hash } from "bcrypt"
+import bcrypt from "bcrypt"
 import { generateRefreshToken, generateAccessToken, checkToken } from "../../lib/auth.js";
 import User from "../mongoose/user.js";
 
@@ -18,6 +18,11 @@ const typeDefs = gql`
             email: String
             username: String
             password: String
+        ): Boolean
+
+        updatePassword(
+            oldPassword: String
+            newPassword: String
         ): Boolean
     }
 
@@ -65,6 +70,25 @@ const resolvers = {
             context.clearCookie("refresh-token");
 
             await User.deleteOne({ email: args.email });
+
+            return true;
+        },
+
+        updatePassword: async (_, args, context) => {
+            if (!context.user) throw new Error("Not logged in!");
+
+            const user = await User.findOne({ _id: context.user._id });
+            if (!user) throw new Error("Cannot find account");
+
+            const validPassword = await bcrypt.compare(args.oldPassword, user.password);
+            if (!validPassword) throw new Error("Incorrect password.");
+
+            const newPasswordHash = await bcrypt.hash(args.newPassword, 12);
+
+            user.password = newPasswordHash;
+            user.lastUpdated = new Date();
+
+            await user.save();
 
             return true;
         },
