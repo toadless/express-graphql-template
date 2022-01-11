@@ -11,6 +11,9 @@ const typeDefs = gql`
         _id: ID
         username: String
         email: String
+
+        creationDate: String
+        lastUpdated: String
     }
 `
 // Define resolvers for the above extensions to the graphql schema

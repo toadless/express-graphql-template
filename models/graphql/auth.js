@@ -13,6 +13,12 @@ const typeDefs = gql`
         ): User
 
         logout: Boolean
+
+        delete(
+            email: String
+            username: String
+            password: String
+        ): Boolean
     }
 
     extend type Query {
@@ -29,10 +35,10 @@ const resolvers = {
             if (context.user) return context.user;
             
             const findByEmail = await User.findOne({ email: args.email });
-            if (findByEmail) return null;
+            if (findByEmail) throw new Error("An account with that email already exists.");
 
             const findByUsername = await User.findOne({ username: args.username });
-            if (findByUsername) return null;
+            if (findByUsername) throw new Error("That username is already taken.");
 
             const hashedPassword = await bcrypt.hash(args.password, 12)
 
@@ -40,9 +46,27 @@ const resolvers = {
                 email: args.email,
                 username: args.username,
                 password: hashedPassword,
+
+                creationDate: new Date(),
+                lastUpdated: new Date(),
             });
 
             return user;
+        },
+
+        delete: async (_, args, context) => {
+            const user = await User.findOne({ email: args.email, username: args.username });
+            if (!user) throw new Error("Cannot find account");
+
+            const validPassword = await bcrypt.compare(args.password, user.password);
+            if (!validPassword) throw new Error("Incorrect password.");
+
+            context.clearCookie("access-token");
+            context.clearCookie("refresh-token");
+
+            await User.deleteOne({ email: args.email });
+
+            return true;
         },
 
         logout: async (_, args, context) => {
@@ -62,7 +86,7 @@ const resolvers = {
             await user.save();
 
             return true;
-        }
+        },
     },
 
     Query: {
@@ -70,10 +94,10 @@ const resolvers = {
             if (context.user) return context.user;
 
             const user = await User.findOne({ email: args.email });
-            if (!user) return null;
+            if (!user) throw new Error("An account with that email does not exist.");
 
             const validPassword = await bcrypt.compare(args.password, user.password);
-            if (!validPassword) return null;
+            if (!validPassword) throw new Error("Incorrect password.");
 
             const id = { _id: user.id };
 
