@@ -12,6 +12,11 @@ const typeDefs = gql`
             password: String
         ): User
 
+        login(
+            email: String
+            password: String
+        ): User
+
         logout: Boolean
 
         delete(
@@ -24,13 +29,6 @@ const typeDefs = gql`
             oldPassword: String
             newPassword: String
         ): Boolean
-    }
-
-    extend type Query {
-        login(
-            email: String
-            password: String
-        ): User
     }
 `
 // Define resolvers for the above extensions to the graphql schema
@@ -113,30 +111,28 @@ const resolvers = {
         },
     },
 
-    Query: {
-        login: async (_, args, context) => {
-            if (context.user) return context.user;
+    login: async (_, args, context) => {
+        if (context.user) return context.user;
 
-            const user = await User.findOne({ email: args.email });
-            if (!user) throw new Error("An account with that email does not exist.");
+        const user = await User.findOne({ email: args.email });
+        if (!user) throw new Error("An account with that email does not exist.");
 
-            const validPassword = await bcrypt.compare(args.password, user.password);
-            if (!validPassword) throw new Error("Incorrect password.");
+        const validPassword = await bcrypt.compare(args.password, user.password);
+        if (!validPassword) throw new Error("Incorrect password.");
 
-            const id = { _id: user.id };
+        const id = { _id: user.id };
 
-            const accessToken = generateAccessToken(id);
-            const refreshToken = generateRefreshToken(id);
+        const accessToken = generateAccessToken(id);
+        const refreshToken = generateRefreshToken(id);
 
-            context.cookie("access-token", accessToken.token, { httpOnly: true });
-            context.cookie("refresh-token", refreshToken.token, { httpOnly: true });
+        context.cookie("access-token", accessToken.token, { httpOnly: true });
+        context.cookie("refresh-token", refreshToken.token, { httpOnly: true });
 
-            user.refreshTokens = [...user.refreshTokens, { tokenJti: refreshToken.payloadHash }];
-            await user.save();
+        user.refreshTokens = [...user.refreshTokens, { tokenJti: refreshToken.payloadHash }];
+        await user.save();
 
-            return user;
-        }
-    }
+        return user;
+    },
 }
 // Package graphql schema (typeDefs), and resolvers as graphql schema module
 // imported by ../server.js to build the apollo server
