@@ -13,11 +13,21 @@ export default new ApolloServer({
     ],
     // the context lets you access the request in the querys/mutations this is 
     // normally used for fetching cookies or setting the user
-    context: ({ req }) => {
+    context: ({ req, res }) => {
         const user = req.user;
+        const cookies = req.cookies;
 
         return {
             user: user,
+            cookies: cookies,
+            
+            cookie: (name, val, options) => {
+                res.cookie(name, val, options)
+            },
+
+            clearCookie: (name, options) => {
+                res.clearCookie(name, options);
+            },
         }
     },
     // apollo server playground (playground and introspection) should be

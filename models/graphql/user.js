@@ -17,7 +17,7 @@ const typeDefs = gql`
 const resolvers = {
     Query: {
         getUser: async (_, args, context) => {
-            return null;
+            return context.user;
         }
     },
 }
