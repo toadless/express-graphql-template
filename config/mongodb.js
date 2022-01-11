@@ -1,7 +1,7 @@
 import mongoose from "mongoose"
 
 // Declare required environment variables
-const url = process.env.MONGO_DB;
+const url = process.env.MONGODB;
 
 // Connect to server using mongoose
 mongoose.connect(url, { useNewUrlParser: true })
