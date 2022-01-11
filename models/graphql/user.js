@@ -1,4 +1,5 @@
 import { gql } from "apollo-server-express"
+import user from "../mongoose/user.js";
 
 // Define modular extensions to the graphql schema
 const typeDefs = gql`
@@ -8,15 +9,15 @@ const typeDefs = gql`
 
     type User {
         _id: ID
-        name: String
+        username: String
         email: String
     }
 `
 // Define resolvers for the above extensions to the graphql schema
 const resolvers = {
     Query: {
-        getUser: (_, args, context) => {
-            return context.user;
+        getUser: async (_, args, context) => {
+            return null;
         }
     },
 }

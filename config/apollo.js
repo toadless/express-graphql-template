@@ -1,5 +1,6 @@
 import { ApolloServer } from "apollo-server-express"
 import user from "../models/graphql/user.js"
+import auth from "../models/graphql/auth.js"
 
 // Export apollo server, built with all of the models (schemas and resolvers)
 // imported above
@@ -8,6 +9,7 @@ export default new ApolloServer({
     // before B in the array, even if A may require types defined within B
     modules: [
         user,
+        auth,
     ],
     // the context lets you access the request in the querys/mutations this is 
     // normally used for fetching cookies or setting the user
